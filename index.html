@@ -26,9 +26,10 @@
       fill: lightgray;
       stroke: darkgray;
     }
-    .name-panel {
+    .BallotUnitNamePanel {
       fill: white;
       stroke: #ccc;
+      rx: 8;
     }
     .button {
       fill: #d9d9d9;
@@ -51,32 +52,53 @@
   </style>
 
   <!-- EVM -->
-  <g id="BallotUnit" transform="translate(10,10)">
-  <rect x="0" y="0" width="340" height="550" rx="18" class="BallotBody"/>
-  <rect x="10" y="10" width="320" height="60" rx="8" class="BallotUnitHeader"/>
-</g>
-  <text x="180" y="58" text-anchor="middle" font-size="16">
-    DEMO VOTING MACHINE
-  </text>
+<g id="BallotUnit" transform="translate(10,10)">
+  <!--This is main rectangle in which all buttons and candidates are --!>
+  <rect x="0" y="0" width="340" height="550" rx="18" class="BallotUnitBody"/>
+
+  <!--this is rectangle which is head of ballot unit where text "DEMO VOTING MACHINE" is written.-->
+
+<rect x="10" y="10"
+      width="320" height="60" rx="8"
+      class="BallotUnitHeader"/>
+
+<!-- [there is no way to center text inside a rectangle. svg has no parent child relationship. so Center of that rectangle must be calculated manually"
+Center X = 10 + (320 / 2) = 170
+Center Y = 10 + (60 / 2) = 40
+-->
+<text x="170" y="40"
+      text-anchor="middle"
+      dominant-baseline="middle"
+      class="BallotUnitHeaderText">
+  DEMO VOTING MACHINE
+</text>
+
 
   <!-- Candidates -->
   <g transform="translate(0,100)">
     <g>
-      <rect x="20" y="0" width="220" height="44" class="name-panel"/>
-      <text x="30" y="28">Candidate 1</text>
+      <rect x="20" y="0" width="220" height="44" class="BallotUnitNamePanel"/>
+      <text x="30" y="28"
+      font-size="24"
+      font-weight="bold"
+      >Apple 🍎</text>
       <circle id="led-1" cx="250" cy="22" r="6" class="led"/>
       <rect x="270" y="4" width="60" height="36" rx="6"
             class="button" onclick="vote(1)"/>
     </g>
 
     <g transform="translate(0,60)">
-      <rect x="20" y="0" width="220" height="44" class="name-panel"/>
-      <text x="30" y="28">Candidate 2</text>
+      <rect x="20" y="0" width="220" height="44" class="BallotUnitNamePanel"/>
+      <text x="30" y="28"
+      font-size="24"
+      font-weight="bold"
+      >Banana 🍌</text>
       <circle id="led-2" cx="250" cy="22" r="6" class="led"/>
       <rect x="270" y="4" width="60" height="36" rx="6"
             class="button" onclick="vote(2)"/>
     </g>
   </g>
+</g>
 
   <!-- VVPAT -->
   <g id="vvpat" transform="translate(380,120)">
