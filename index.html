@@ -71,19 +71,30 @@ body {
 	  fill="gainsboro" 
 	  stroke="#aaa"/>
 		
-    <rect x="30" y="30" width="140" height="80"
-          fill="black"/>
+    <!--this is vvpat screen from which voters see their vote slip-->
+    <rect x="40" y="30"
+	width="120" 
+	height="80"
+        fill="black"/>
 
     <g id="slip" opacity="0">
-      <rect x="40" y="35" width="120" height="60"
-            fill="#fff"/>
-      <text id="slip-text" x="50" y="65"
-            font-size="12" font-family="monospace">
+      <rect x="41" y="31"
+	width="118"
+	height="78"
+        fill="#fff"/>
+      <text id="slip-text"
+	    x="100" y="75"
+	    text-anchor="middle"
+	    dominant-baseline="middle"
+	
+            font-size="42">
       </text>
     </g>
 
-    <text x="100" y="130" text-anchor="middle" font-size="12">
-      VVPAT
+    <text x="100" y="230"
+    text-anchor="middle"
+    font-size="18">
+MOCK VVPAT
     </text>
 
   </svg>
@@ -155,8 +166,10 @@ body {
       <text x="170" y="40"
             text-anchor="middle"
             dominant-baseline="middle"
+	    font-size="24"
+	    font-weight="bold"
             class="BallotUnitHeaderText">
-        DEMO VOTING MACHINE
+        MOCK VOTING MACHINE
       </text>
 
       <!-- Candidates -->
@@ -199,23 +212,61 @@ body {
 </div>
 
 <script>
-  function vote(n) {
-    document.querySelectorAll('.led')
-      .forEach(l => l.classList.remove('on'));
+  let isLocked = false;
+  let unlockTimer = null;
+ function vote(n) {
 
-    document.getElementById('led-' + n)
-      .classList.add('on');
-
-    document.getElementById('slip-text')
-      .textContent = 'Candidate ' + n;
-
-    const slip = document.getElementById('slip');
-    slip.style.opacity = 1;
-
-    setTimeout(() => {
-      slip.style.opacity = 0;
-    }, 3000);
+  // ⛔ BLOCK if machine is locked
+  if (isLocked) {
+    console.log('Vote blocked: machine busy');
+    return;
   }
+
+  // 🔒 Lock immediately
+  isLocked = true;
+
+  // Clear any old unlock timer (safety)
+  if (unlockTimer) {
+    clearTimeout(unlockTimer);
+  }
+
+  // --------------------
+  // NORMAL VOTE LOGIC
+  // --------------------
+
+  // Turn off all LEDs
+  document.querySelectorAll('.led')
+    .forEach(l => l.classList.remove('on'));
+
+  // Turn ON selected LED
+  const led = document.getElementById('led-' + n);
+  led.classList.add('on');
+
+  // Candidate mapping
+  const candidates = {
+    1: '🍎',
+    2: '🍌'
+  };
+
+  // Update VVPAT slip
+  document.getElementById('slip-text').textContent =
+    candidates[n];
+
+  const slip = document.getElementById('slip');
+  slip.style.opacity = 1;
+
+  // Hide slip after 3 seconds
+  setTimeout(() => {
+    slip.style.opacity = 0;
+    led.classList.remove('on');
+  }, 7000);
+
+  // 🔓 UNLOCK AFTER 7 SECONDS (from LAST vote)
+  unlockTimer = setTimeout(() => {
+    isLocked = false;
+    console.log('Machine unlocked, ready for next vote');
+  }, 7000);
+} 
 </script>
 
 </body>
