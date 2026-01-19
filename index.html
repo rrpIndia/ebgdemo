@@ -83,13 +83,33 @@ body {
 
 <style>
 #vvpat-top {
+  fill: #e6e6e6;
+  stroke: #aaa;
   transform-origin: 0% 50%;
   transform-box: fill-box;
   transition: transform 0.9s ease;
+  filter: drop-shadow(2px 3px 2px rgb(0 0 0 / 0.4));
 }
 
 #vvpat-top.open {
   transform: perspective(800px) rotateY(-120deg);
+}
+
+.vvpat-footer {
+  fill: lightgray;
+  stroke: darkgray;
+  stroke-width: 3px;
+}
+
+.vvpat-footer-text {
+  fill: #222;
+  stroke: #aaa;
+  stroke-width: 1.2;
+  paint-order: stroke fill;
+  font-size: 24px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  filter: drop-shadow(2px 3px 2px rgb(0 0 0 / 0.4));
 }
 
 #vvpat-inner-face {
@@ -127,12 +147,12 @@ body {
 <!-- Fixed VVPAT inner base interior of vvpat) (always visible) -->
 <rect x="0" y="0"
       width="340" height="550"
-      rx="6"
+      rx="18"
       fill="#b0b0b0"
       stroke="#9a9a9a"/>
 <rect x="2" y="2"
       width="336" height="546"
-      rx="5"
+      rx="17"
       fill="none"
       stroke="#8c8c8c"
       stroke-width="3"/>
@@ -142,9 +162,8 @@ body {
   <rect x="0" y="0" 
 	width="340"
 	height="550"
-        rx="6"
-	fill="#e6e6e6"
-	stroke="#aaa"/>
+        rx="18"
+/>
 
   <!--black glass-->
   <rect x="95" y="30"
@@ -152,14 +171,11 @@ body {
 	height="100"
         fill="black"
 	rx="4"/>
-  
-  <text x="100" y="230"
-      text-anchor="middle"
-      font-size="18"
-      font-weight="bold"
-      class="hd">
-	MOCK VVPAT
-  </text>
+
+  <!--VVPAT FOOTER FOR TEXT-->
+  <rect x="15" y="475" rx="8" width="310" height="60" class="vvpat-footer"/>
+
+  <text x="170" y="505" text-anchor="middle" dominant-baseline="middle" class="vvpat-footer-text"> MOCK VVPAT </text>
 </g>
 <!--========end of lid========-->
 
@@ -192,8 +208,6 @@ body {
      class="svg-ballot-unit"
      >
 
-
-
 <style>
 
 .bu-body {
@@ -207,8 +221,7 @@ body {
   fill: lightgray;
   stroke: darkgray;
   stroke-width: 3px;
-  width: 320px;
-  height: 60px;
+
 }
 
 .bu-header-text {
@@ -254,7 +267,7 @@ body {
 <g transform="translate(130,10)">
   <rect x="0" y="0" rx="18" width="340" height="550" class="bu-body"/>
 
-  <rect x="10" y="10" rx="8" class="bu-header"/>
+  <rect x="10" y="10" rx="8"   width="320" height="60" class="bu-header"/>
 
   <!-- SVG has no parent-child layout.
        Center must be calculated manually -->
