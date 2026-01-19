@@ -81,6 +81,12 @@ body {
      viewBox="0 0 600 720"
      class="svg-vvpat">
 
+<defs>
+  <clipPath id="slip-window">
+    <rect x="96" y="31" width="148" height="98" rx="4"/>
+  </clipPath>
+</defs>
+
 <style>
 #vvpat-top {
   fill: #e6e6e6;
@@ -131,11 +137,19 @@ body {
   transition: opacity 0.6s ease, filter 0.6s ease;
 }
 
+#vvpat-slip-paper {
+  transform: translateY(-90px);
+  transition: transform 0.9s ease-out;
+}
+
+#vvpat-slip.printing #vvpat-slip-paper {
+  transform: translateY(0);
+}
+
 #vvpat-top.open ~ #vvpat-slip {
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.25));
 }
 </style>
-
 
 <g transform="translate(130,40)">
 
@@ -182,20 +196,21 @@ body {
 <!--========end of lid========-->
 
 <!-- VVPAT Slip -->
-<g id="vvpat-slip" opacity="0">
-  <rect x="96" y="31"
-        width="148" height="98"
-        fill="#fdfdfd"
-  	stroke="#c4c4c4"
-	rx="4"/>
+<!-- VVPAT Slip (animated paper) -->
+<g id="vvpat-slip" clip-path="url(#slip-window)">
+  <g id="vvpat-slip-paper">
+    <rect x="96" y="31"
+          width="148" height="98"
+          fill="#fdfdfd"
+          stroke="#c4c4c4"
+          rx="4"/>
 
-  <!-- uses js to show slip-->
-  <text id="vvpat-slip-icon"
-        x="169" y="79"
-        text-anchor="middle"
-        dominant-baseline="middle"
-        font-size="42"></text>
-</g>
+    <text id="vvpat-slip-icon"
+          x="169" y="79"
+          text-anchor="middle"
+          dominant-baseline="middle"
+          font-size="42"></text>
+  </g>
 </g>
 
 </svg>
@@ -372,13 +387,19 @@ function tempLED(n) {
 
 function showVVPAT(n) {
   const text = document.getElementById('vvpat-slip-icon');
+  const slip = document.getElementById('vvpat-slip');
 
-  hasVoted = true;   // 👈 FIRST EVER VOTE
+  hasVoted = true;
 
   lastVotedCandidate = (n === 1) ? '🍎' : '🍌';
   text.textContent = lastVotedCandidate;
 
   artificialLightOn = true;
+
+  slip.classList.remove('printing'); // reset
+  void slip.offsetWidth;             // force reflow
+  slip.classList.add('printing');    // start animation
+
   updateSlipVisibility();
 }
 
