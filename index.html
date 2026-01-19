@@ -126,6 +126,8 @@ body {
   opacity: 0;
 }
 #vvpat-slip {
+  display: none;          /* does not exist visually */
+  opacity: 0;
   transition: opacity 0.6s ease, filter 0.6s ease;
 }
 
@@ -318,11 +320,22 @@ let unlockTimer = null;
 let vvpatOpen = false;
 let lastVotedCandidate = null;
 let artificialLightOn = false;
+let hasVoted = false;
 
 function updateSlipVisibility() {
   const slip = document.getElementById('vvpat-slip');
 
-  // visible if natural OR artificial light
+  // Never show before first vote
+  if (!hasVoted) {
+    slip.style.display = 'none';
+    slip.style.opacity = 0;
+    return;
+  }
+
+  // Slip exists after first vote
+  slip.style.display = 'block';
+
+  // Visible only if lid open OR artificial light ON
   if (vvpatOpen || artificialLightOn) {
     slip.style.opacity = 1;
   } else {
@@ -360,10 +373,12 @@ function tempLED(n) {
 function showVVPAT(n) {
   const text = document.getElementById('vvpat-slip-icon');
 
+  hasVoted = true;   // 👈 FIRST EVER VOTE
+
   lastVotedCandidate = (n === 1) ? '🍎' : '🍌';
   text.textContent = lastVotedCandidate;
 
-  artificialLightOn = true;   // internal lamp ON
+  artificialLightOn = true;
   updateSlipVisibility();
 }
 
