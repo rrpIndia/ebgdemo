@@ -318,31 +318,15 @@ Banana 🍌
 let isLocked = false;
 let unlockTimer = null;
 let vvpatOpen = false;
-let lastVotedCandidate = null;
 let artificialLightOn = false;
-let hasVoted = false;
 
-function updateSlipVisibility() {
-  const slip = document.getElementById('vvpat-slip');
+// ordered vote history
+const voteLog = new Map();
 
-  // Never show before first vote
-  if (!hasVoted) {
-    slip.style.display = 'none';
-    slip.style.opacity = 0;
-    return;
-  }
-
-  // Slip exists after first vote
-  slip.style.display = 'block';
-
-  // Visible only if lid open OR artificial light ON
-  if (vvpatOpen || artificialLightOn) {
-    slip.style.opacity = 1;
-  } else {
-    slip.style.opacity = 0;
-  }
+function getLastVote() {
+  if (voteLog.size === 0) return null;
+  return Array.from(voteLog.values()).at(-1);
 }
-
 function acquireLock() {
   if (isLocked) return false;
   isLocked = true;
@@ -370,13 +354,40 @@ function tempLED(n) {
   }, 7000);
 }
 
-function showVVPAT(n) {
+
+function updateSlipVisibility() {
+  const slip = document.getElementById('vvpat-slip');
+
+  // Never show before first vote
+  if (voteLog.size === 0) {
+    slip.style.display = 'none';
+    slip.style.opacity = 0;
+    return;
+  }
+
+  slip.style.display = 'block';
+
+  if (vvpatOpen || artificialLightOn) {
+    slip.style.opacity = 1;
+  } else {
+    slip.style.opacity = 0;
+  }
+}
+
+function showVVPAT(buttonNumber) {
   const text = document.getElementById('vvpat-slip-icon');
 
-  hasVoted = true;   // 👈 FIRST EVER VOTE
+  const symbol = (buttonNumber === 1) ? '🍎' : '🍌';
 
-  lastVotedCandidate = (n === 1) ? '🍎' : '🍌';
-  text.textContent = lastVotedCandidate;
+  const voteNumber = voteLog.size + 1;
+
+  voteLog.set(voteNumber, {
+    button: buttonNumber,
+    symbol
+  });
+
+  // show LAST vote only (same behaviour as before)
+  text.textContent = symbol;
 
   artificialLightOn = true;
   updateSlipVisibility();
@@ -386,15 +397,13 @@ function vote(el, n) {
   if (!acquireLock()) return;
 
   if (unlockTimer) clearTimeout(unlockTimer);
-  
-  // visual press
+
   el.classList.add("pressed");
   setTimeout(() => el.classList.remove("pressed"), 1500);
 
   tempLED(n);
   showVVPAT(n);
 
-  // turn OFF artificial light after 7 seconds
   setTimeout(() => {
     artificialLightOn = false;
     updateSlipVisibility();
