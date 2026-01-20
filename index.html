@@ -326,10 +326,17 @@ Banana 🍌
 
 <!-- ================= APPLICATION LOGIC ================= -->
 <script>
+let previewSlip = null;        // unresolved slip at preview
+let lastVoteSymbol = null;    // 🍎 / 🍌
+const winner = "🍌";
+let votingClosedNotified = false;
+let artificialLightOn = false;
+let vvpatOpen = false;
+let winnerEmittedForRun = false;
+const voteLog = new Map();    // ONLY finalized slips
+
 let isLocked = false;
 let unlockTimer = null;
-let vvpatOpen = false;
-let artificialLightOn = false;
 
 const PREVIEW_POS = { x: 96, y: 31 };
 
@@ -340,46 +347,23 @@ const STORAGE_POSITIONS = [
   { x: 178, y: 438 } // vote-4
   ];
 
-function repositionSlips() {
-  const slips = Array.from(voteLog.values());
-
-  // iterate from oldest to newest
-  slips.forEach((slip, index) => {
-    if (index === slips.length - 1) {
-      // newest → preview
-      slip.setAttribute(
-        "transform",
-        `translate(${PREVIEW_POS.x} ${PREVIEW_POS.y})`
-      );
-
-      document
-        .getElementById("vvpat-slip-placeholder")
-        .appendChild(slip);
-
-    } else {
-      // older → storage
-      const pos = STORAGE_POSITIONS[index];
-      if (!pos) return;
-
-      slip.setAttribute(
-        "transform",
-        `translate(${pos.x} ${pos.y})`
-      );
-
-      document
-        .getElementById(`vote-${index + 1}-placeholder`)
-        .appendChild(slip);
-    }
-  });
+function createSlip(symbol) {
+  const template = document.getElementById("vvpat-slip");
+  const slip = template.cloneNode(true);
+  slip.removeAttribute("id");
+  slip.querySelector("text").textContent = symbol;
+  return slip;
 }
 
-// ordered vote history
-const voteLog = new Map();
-
-
-function showDebug(msg) {
-  document.getElementById("debug").textContent = msg;
+function placePreview(slip) {
+  slip.setAttribute(
+    "transform",
+    `translate(${PREVIEW_POS.x} ${PREVIEW_POS.y})`
+  );
+  document.getElementById("vvpat-slip-placeholder").appendChild(slip);
 }
+
+
 
 function getLastVote() {
   if (voteLog.size === 0) return null;
@@ -412,66 +396,101 @@ function tempLED(n) {
   }, 7000);
 }
 
+let lightTimer = null;
+
+function startArtificialLight(onExpire) {
+  artificialLightOn = true;
+  updateSlipVisibility();
+
+  if (lightTimer) clearTimeout(lightTimer);
+  lightTimer = setTimeout(() => {
+    artificialLightOn = false;
+    if (onExpire) onExpire();
+    updateSlipVisibility();
+  }, 7000);
+}
 
 function updateSlipVisibility() {
-  const slips = Array.from(voteLog.values());
-  if (slips.length === 0) return;
+  const stored = Array.from(voteLog.values());
+  const all = previewSlip ? [...stored, previewSlip] : stored;
 
-  const previewSlip = slips[slips.length - 1];
-
-  slips.forEach(slip => {
-
-    // 1️⃣ Lid open → all visible
+  all.forEach(slip => {
     if (vvpatOpen) {
       slip.setAttribute("opacity", "1");
-    }
-
-    // 2️⃣ Lid closed + artificial light ON → only preview
-    else if (artificialLightOn) {
-      slip.setAttribute(
-        "opacity",
-        slip === previewSlip ? "1" : "0"
-      );
-    }
-
-    // 3️⃣ Lid closed + artificial light OFF → all hidden
-    else {
+    } else if (artificialLightOn) {
+      slip.setAttribute("opacity", slip === previewSlip ? "1" : "0");
+    } else {
       slip.setAttribute("opacity", "0");
     }
   });
 }
 
 function showVVPAT(buttonNumber) {
-  const symbol = (buttonNumber === 1) ? '🍎' : '🍌';
+  const symbol = (buttonNumber === 1) ? "🍎" : "🍌";
 
-  const template = document.getElementById("vvpat-slip");
-  const slip = template.cloneNode(true);
-  slip.removeAttribute("id");
+  // CASE 1: first vote OR different vote
+  if (lastVoteSymbol !== symbol) {
 
-  const voteIndex = voteLog.size + 1;
-  const id = `vote-${voteIndex}`;
-  slip.setAttribute("id", id);
+  winnerEmittedForRun = false; // 🔑 RESET HERE
 
-  slip.querySelector("text").textContent = symbol;
+    // resolve old preview (loser waits for vote)
+    if (previewSlip) {
+      finalizeSlip(previewSlip);
+      previewSlip = null;
+    }
 
-  // insert first (position will be set by repositionSlips)
-  voteLog.set(id, slip);
+    previewSlip = createSlip(symbol);
+    placePreview(previewSlip);
+    lastVoteSymbol = symbol;
 
-  repositionSlips();
-  // 🔥 ARTIFICIAL LIGHT STARTS HERE
-  artificialLightOn = true;
-  updateSlipVisibility();
+    startArtificialLight(() => {
+      // ONLY winner auto-resolves
+      if (
+        previewSlip &&
+        previewSlip.querySelector("text").textContent === winner
+      ) {
+        finalizeSlip(previewSlip);
+        previewSlip = null;
+      }
+    });
 
-  // reset artificial light timer
-  if (unlockTimer) clearTimeout(unlockTimer);
+    return;
+  }
+// CASE 2: same vote again
+startArtificialLight(() => {
 
-  unlockTimer = setTimeout(() => {
-    artificialLightOn = false;
-    updateSlipVisibility();
-  }, 7000);
+  // finalize preview if present
+  if (previewSlip) {
+    finalizeSlip(previewSlip);
+    previewSlip = null;
+  }
+
+  // emit winner only once
+  if (!winnerEmittedForRun) {
+    const winnerSlip = createSlip(winner);
+    finalizeSlip(winnerSlip);
+    winnerEmittedForRun = true;
+  }
+
+  // 🔑 END THE RUN
+  lastVoteSymbol = null;
+  winnerEmittedForRun = false;
+});
+}
+
+function votingEnded() {
+  return voteLog.size >= 4;
 }
 
 function vote(el, n) {
+  if (votingEnded()) {
+    if (!votingClosedNotified) {
+      alert("Voting has ended.\nPlease see the results.");
+      votingClosedNotified = true;
+    }
+    return;
+  }
+
   if (!acquireLock()) return;
 
   if (unlockTimer) clearTimeout(unlockTimer);
@@ -481,10 +500,6 @@ function vote(el, n) {
 
   tempLED(n);
   showVVPAT(n);
-
-  setTimeout(() => {
-    artificialLightOn = false;
-  }, 7000);
 
   unlockTimer = setTimeout(releaseLock, 7000);
 }
@@ -498,6 +513,30 @@ function toggleVVPAT() {
 
 
 }
+
+function finalizeSlip(slip) {
+  voteLog.set(`vote-${voteLog.size + 1}`, slip);
+  layoutStorage();
+}
+
+function layoutStorage() {
+  const slips = Array.from(voteLog.values());
+
+  slips.forEach((slip, index) => {
+    const pos = STORAGE_POSITIONS[index];
+    if (!pos) return;
+
+    slip.setAttribute(
+      "transform",
+      `translate(${pos.x} ${pos.y})`
+    );
+
+    document
+      .getElementById(`vote-${index + 1}-placeholder`)
+      .appendChild(slip);
+  });
+}
+
 </script>
 
 </body>
