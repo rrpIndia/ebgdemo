@@ -30,7 +30,7 @@ body {
 .svg-vvpat {
   width: 320px;
   max-width: 90vw;
-  outline:2px solid lime;
+  /*outline:2px solid lime;*/
 }
 
 .svg-ballot-unit-wrapper {
@@ -39,7 +39,7 @@ body {
 }
 
 .svg-ballot-unit {
-  outline:2px solid lime;
+  /*outline:2px solid lime;*/
   max-width: 95vw;
   width: 320px;
 }
@@ -339,7 +339,7 @@ const voteLog = new Map();    // ONLY finalized slips
 let isLocked = false;
 let unlockTimer = null;
 let lightTimer = null;
-let secondLastVote = null; // "🍎" | "🍌" | null
+let lastVote = null; // "🍎" | "🍌" | null
 
 function debugLog(msg) {
   const d = document.getElementById("debug");
@@ -355,11 +355,11 @@ const STORAGE_POSITIONS = [
   { x: 178, y: 438 } // vote-4
   ];
 
-function deriveLogicalVote(pressedVote, secondLastVote) {
+function deriveLogicalVote(pressedVote, lastVote) {
   // Your rule:
   // If Apple is pressed twice in a row,
   // logical vote flips to Banana
-  if (pressedVote === "🍎" && secondLastVote === "🍎") {
+  if (pressedVote === "🍎" && lastVote === "🍎") {
     return "🍌";
   }
   return pressedVote;
@@ -431,22 +431,50 @@ function releaseLock() {
 }
 
 function tempLED(n) {
+
+  // HOW:
+  // Select all elements with class "led" and remove the "on" class
+  // WHY:
+  // Only one LED should ever be ON at a time (prevents overlap from past votes)
   document.querySelectorAll('.led')
-    //remove on from class="led on"
     .forEach(l => l.classList.remove('on'));
 
+  // HOW:
+  // Find the specific LED corresponding to the candidate number
+  // WHY:
+  // Each candidate has its own LED (e.g. led-1, led-2, ...)
   const led = document.getElementById('led-' + n);
+
+  // HOW:
+  // Exit early if the LED does not exist
+  // WHY:
+  // Prevents JavaScript errors and keeps the function safe to call
   if (!led) return;
 
-  led.classList.add('on');
-
-  // turn OFF after 7 seconds
+  // HOW:
+  // Delay execution by 1 second using setTimeout
+  // WHY:
+  // This delay synchronizes LED activation with the slip printing animation,
+  // which takes ~1 second to complete
   setTimeout(() => {
-    led.classList.remove('on');
-  }, 7000); 
+
+    // HOW:
+    // Add the "on" class to visually activate the LED
+    // WHY:
+    // LED should light up only after the slip is fully printed
+    led.classList.add('on');
+
+    // HOW:
+    // Schedule another timeout to remove the "on" class after 7 seconds
+    // WHY:
+    // Election rules: the LED (artificial light) must remain ON
+    // only for a limited visibility window
+    setTimeout(() => {
+      led.classList.remove('on');
+    }, 7000);
+
+  }, 1000);
 }
-
-
 
 
 function updateSlipVisibility() {
@@ -497,12 +525,14 @@ async function moveToStorage(symbol) {
 }
 
 async function handleVote(symbol) {
-  const registeredVote = deriveLogicalVote(symbol, secondLastVote);
-  debugLog("DECIDE → vote=" + symbol + ", secondLast=" + secondLastVote);
+  const registeredVote = deriveLogicalVote(symbol, lastVote);
+  
+  //debugLog("DECIDE → vote=" + symbol + ", secondLast=" + lastVote);
+
   if (sequenceRunning) return;
   sequenceRunning = true;
 
-  const prev = secondLastVote;
+  const prev = lastVote;
   // ===== BANANA =====
   if (symbol === "🍌") {
 
@@ -514,7 +544,7 @@ async function handleVote(symbol) {
     await showFruit("🍌");
     await moveToStorage("🍌");
 
-	  secondLastVote = registeredVote;
+	  lastVote = registeredVote;
   }
 
   // ===== APPLE =====
@@ -539,7 +569,7 @@ async function handleVote(symbol) {
       await showFruit("🍎");
     }
 
-	  secondLastVote = registeredVote;
+	  lastVote = registeredVote;
   }
 
   sequenceRunning = false;
@@ -563,12 +593,12 @@ function vote(el, n) {
   if (unlockTimer) clearTimeout(unlockTimer);
 
   el.classList.add("pressed");
-  setTimeout(() => el.classList.remove("pressed"), 1500);
+  setTimeout(() => el.classList.remove("pressed"), 1000);
 
   tempLED(n);
   const symbol = (n === 1) ? "🍎" : "🍌";
 handleVote(symbol);
-  unlockTimer = setTimeout(releaseLock, 7000); 
+  unlockTimer = setTimeout(releaseLock, 14000); 
 }
 
 function toggleVVPAT() {
