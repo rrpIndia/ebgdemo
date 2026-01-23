@@ -520,18 +520,47 @@ function createSlip(symbol) {
 }
 
 async function printFruit(symbol) {
+  // HOW:
+  // Create a new slip element using the template
+  // WHY:
+  // Each vote must have a unique slip instance
   const slip = createSlip(symbol);
 
+  // HOW:
+  // Place the slip into the preview window position
+  // WHY:
+  // Printing always happens at the preview location
   placePreview(slip);
 
-  slip.setAttribute("opacity", "1");
+  // HOW:
+  // Start the printing animation
+  // WHY:
+  // Visual effect of paper coming out
   slip.classList.add("printing");
 
-  // wait for print animation
+  // 🔑 HOW:
+  // Apply Phase-2 visibility rules immediately
+  // WHY:
+  // Printing must obey lid + artificial light rules
+  updateSlipVisibility();
+
+  // HOW:
+  // Wait for the printing animation to complete
+  // WHY:
+  // Printing takes ~1 second
   await sleep(1000);
 
-  // 🔑 stop printing forever
+  // HOW:
+  // Stop the printing animation
+  // WHY:
+  // Prevents looping animation
   slip.classList.remove("printing");
+
+  // 🔑 HOW:
+  // Re-apply visibility rules after printing finishes
+  // WHY:
+  // State may have changed during animation
+  updateSlipVisibility();
 }
 
 function placePreview(slip) {
@@ -661,9 +690,11 @@ async function moveToStorage() {
 
   voteLog.set(`vote-${voteCount}`, wrapper);
 
+  // 🔑 FORCE VISIBILITY RULES BEFORE MOVEMENT
+  updateSlipVisibility();
+
   const pos = STORAGE_POSITIONS[voteCount - 1];
 
-  // animate wrapper (positioned element)
   wrapper.setAttribute(
     "transform",
     `translate(${pos.x} ${pos.y})`
@@ -674,6 +705,9 @@ async function moveToStorage() {
   document
     .getElementById(`vote-${voteCount}-placeholder`)
     .appendChild(wrapper);
+
+  // 🔑 OPTIONAL safety reapply
+  updateSlipVisibility();
 }
 
 async function handleVote(symbol) {
