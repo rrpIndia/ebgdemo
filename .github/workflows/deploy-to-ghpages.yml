@@ -38,10 +38,10 @@ jobs:
 
       # 👇 THIS IS THE ONLY ADDITION
       - name: Make Eleventy executable
-        run: chmod +x node_modules/.bin/eleventy
-
-      - run: npm run build-ghpages
+        run: chmod +x node_modules/.bin/pagefind
       - run: ls -l node_modules/.bin | grep pagefind
+      - run: npm run build-ghpages
+      
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         if: github.ref == 'refs/heads/main'
