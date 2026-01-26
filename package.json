@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "prebuild": "chmod +x node_modules/.bin/eleventy node_modules/.bin/pathfind",
+    "prebuild": "chmod +x node_modules/.bin/pathfind",
     "build": "eleventy",
     "build-ghpages": "npx eleventy --pathprefix=/website/ && npx pagefind --site _site"
   },
