@@ -11,31 +11,34 @@ jobs:
     runs-on: ubuntu-22.04
     permissions:
       contents: write
-
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: "18"
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build Eleventy site
-        run: npm run build-ghpages
-
-      # ✅ Correct Pagefind action
-      - name: Build Pagefind index
-        uses: Pagefind/pagefind-action@v1
+      - name: Persist npm cache
+        uses: actions/cache@v3
         with:
-          site: _site
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
 
-      - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/main'
+      - name: Persist Eleventy .cache
+        uses: actions/cache@v3
+        with:
+          path: ./.cache
+          key: ${{ runner.os }}-eleventy-fetch-cache
+
+      - run: npm install
+      - run: npm run build-ghpages
+
+      - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/main'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./_site

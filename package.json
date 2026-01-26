@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "build": "node ./node_modules/@11ty/eleventy/cmd.js",
-    "build-ghpages": "node ./node_modules/@11ty/eleventy/cmd.js --pathprefix=/website/",
-    "serve": "node ./node_modules/@11ty/eleventy/cmd.js --serve"
+    "build-ghpages": "npx @11ty/eleventy --pathprefix=/website/"
   },
   "devDependencies": {
     "@11ty/eleventy": "^2.0.1",
